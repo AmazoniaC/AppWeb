@@ -13,6 +13,7 @@ export const ROL_ETIQUETA: Record<Rol, string> = {
 // Secciones de la app y qué roles pueden entrar. El orden define el menú.
 export const SECCIONES = [
   { href: "/inicio", titulo: "Inicio", roles: ["ADMIN", "VENTAS", "PLANTA", "CONDUCTOR"] },
+  { href: "/clientes", titulo: "Clientes", roles: ["ADMIN", "VENTAS"] },
   { href: "/ventas", titulo: "Ventas", roles: ["ADMIN", "VENTAS"] },
   { href: "/planta", titulo: "Planta", roles: ["ADMIN", "PLANTA"] },
   { href: "/conductor", titulo: "Mis despachos", roles: ["ADMIN", "CONDUCTOR"] },

@@ -10,7 +10,7 @@ export default async function InicioPage({ searchParams }: PageProps<"/inicio">)
   const { denegado } = await searchParams;
 
   const [clientes, pedidosAbiertos, despachosActivos] = await Promise.all([
-    prisma.cliente.count({ where: { activo: true } }),
+    prisma.cliente.count({ where: { estado: "ACTIVO" } }),
     prisma.pedido.count({ where: { estado: { in: ["PENDIENTE", "CONFIRMADO", "EN_PRODUCCION"] } } }),
     prisma.despacho.count({ where: { estado: { in: ["CARGANDO", "EN_RUTA", "EN_OBRA"] } } }),
   ]);

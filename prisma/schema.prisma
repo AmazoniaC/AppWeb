@@ -29,30 +29,97 @@ model Usuario {
   creadoEn      DateTime @default(now()) @map("creado_en")
   actualizadoEn DateTime @updatedAt @map("actualizado_en")
 
-  pedidosCreados Pedido[]   @relation("PedidoCreadoPor")
-  despachos      Despacho[] @relation("DespachoConductor")
+  pedidosCreados Pedido[]      @relation("PedidoCreadoPor")
+  despachos      Despacho[]    @relation("DespachoConductor")
   vehiculo       Vehiculo?
+  clientes       Cliente[]     @relation("ClienteAsesor")
+  seguimientos   Seguimiento[] @relation("SeguimientoUsuario")
 
   @@map("usuarios")
 }
 
 // ─── Comercial ──────────────────────────────────────────────────────
 
+enum TipoPersona {
+  NATURAL
+  JURIDICA
+}
+
+enum TipoDocumento {
+  NIT
+  CC
+  CE
+  PASAPORTE
+}
+
+// PROSPECTO: aún no compra; ACTIVO: cliente vigente; INACTIVO: ya no se le vende.
+enum EstadoCliente {
+  PROSPECTO
+  ACTIVO
+  INACTIVO
+}
+
 model Cliente {
-  id            String   @id @default(cuid())
-  nombre        String
-  documento     String   @unique // NIT o cédula
-  telefono      String?
-  email         String?
-  direccion     String?
-  activo        Boolean  @default(true)
-  creadoEn      DateTime @default(now()) @map("creado_en")
-  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+  id              String        @id @default(cuid())
+  tipoPersona     TipoPersona   @default(JURIDICA) @map("tipo_persona")
+  tipoDocumento   TipoDocumento @default(NIT) @map("tipo_documento")
+  documento       String        @unique // NIT o cédula
+  nombre          String // Razón social o nombre completo
+  nombreComercial String?       @map("nombre_comercial")
+  telefono        String?
+  whatsapp        String? // Celular para WhatsApp; si falta se usa el teléfono
+  email           String?
+  direccion       String?
+  ciudad          String?
+  contactoNombre  String?       @map("contacto_nombre")
+  contactoCargo   String?       @map("contacto_cargo")
+  estado          EstadoCliente @default(ACTIVO)
+  // Condiciones comerciales que usarán cotizaciones, ventas y cartera.
+  plazoPagoDias   Int           @default(0) @map("plazo_pago_dias") // 0 = contado
+  cupoCredito     Decimal?      @map("cupo_credito") @db.Decimal(14, 2)
+  notas           String?
+  asesorId        String?       @map("asesor_id")
+  creadoEn        DateTime      @default(now()) @map("creado_en")
+  actualizadoEn   DateTime      @updatedAt @map("actualizado_en")
 
-  obras   Obra[]
-  pedidos Pedido[]
+  asesor       Usuario?      @relation("ClienteAsesor", fields: [asesorId], references: [id])
+  obras        Obra[]
+  pedidos      Pedido[]
+  seguimientos Seguimiento[]
 
+  @@index([estado])
+  @@index([asesorId])
   @@map("clientes")
+}
+
+enum TipoSeguimiento {
+  LLAMADA
+  WHATSAPP
+  VISITA
+  CORREO
+  REUNION
+  NOTA
+}
+
+// Historial de contacto con el cliente. Si trae proximaFecha es una tarea
+// pendiente hasta que se marque completada.
+model Seguimiento {
+  id            String          @id @default(cuid())
+  clienteId     String          @map("cliente_id")
+  usuarioId     String          @map("usuario_id")
+  tipo          TipoSeguimiento
+  descripcion   String
+  proximaAccion String?         @map("proxima_accion")
+  proximaFecha  DateTime?       @map("proxima_fecha")
+  completadoEn  DateTime?       @map("completado_en")
+  creadoEn      DateTime        @default(now()) @map("creado_en")
+
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation("SeguimientoUsuario", fields: [usuarioId], references: [id])
+
+  @@index([clienteId, creadoEn])
+  @@index([proximaFecha])
+  @@map("seguimientos")
 }
 
 model Obra {
