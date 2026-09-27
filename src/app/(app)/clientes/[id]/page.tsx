@@ -9,8 +9,10 @@ import {
   plazoPagoTexto,
 } from "@/lib/clientes";
 import { historialCompras } from "@/lib/clientes-datos";
+import { EstadoBadge } from "@/components/estado";
+import { Icono } from "@/components/iconos";
+import { Dato, Encabezado, Indicador, Tarjeta, Vacio } from "@/components/ui";
 import {
-  etiquetaEstado,
   formatoFecha,
   formatoFechaHora,
   formatoM3,
@@ -69,22 +71,23 @@ export default async function ClientePage({ params }: PageProps<"/clientes/[id]"
   });
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Link href="/clientes" className="text-sm text-stone-500 hover:underline">
-          ← Clientes
-        </Link>
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold">{cliente.nombre}</h1>
-          <span className={`rounded px-2 py-0.5 text-xs ${ESTADO_CLIENTE_COLOR[cliente.estado]}`}>
-            {ESTADO_CLIENTE_ETIQUETA[cliente.estado]}
+    <div className="space-y-6">
+      <Encabezado
+        volver={{ href: "/clientes", texto: "Clientes" }}
+        titulo={
+          <span className="flex flex-wrap items-center gap-3">
+            {cliente.nombre}
+            <span className={`badge ${ESTADO_CLIENTE_COLOR[cliente.estado]}`}>
+              {ESTADO_CLIENTE_ETIQUETA[cliente.estado]}
+            </span>
           </span>
-          <Link href={`/clientes/${id}/editar`} className="btn-secondary ml-auto">
-            Editar
-          </Link>
-        </div>
-        {cliente.nombreComercial && <p className="text-sm text-stone-500">{cliente.nombreComercial}</p>}
-      </div>
+        }
+        descripcion={cliente.nombreComercial}
+      >
+        <Link href={`/clientes/${id}/editar`} className="btn-secondary py-2">
+          Editar
+        </Link>
+      </Encabezado>
 
       <WhatsappBoton
         clienteId={id}
@@ -92,17 +95,21 @@ export default async function ClientePage({ params }: PageProps<"/clientes/[id]"
         plantillas={plantillas}
       />
 
-      <div className="grid gap-4 sm:grid-cols-4">
-        <Indicador titulo="Pedidos" valor={String(resumen.pedidos)} />
-        <Indicador titulo="Volumen comprado" valor={formatoM3(resumen.volumenM3)} />
-        <Indicador titulo="Valor comprado" valor={formatoPesos(resumen.valor)} />
-        <Indicador titulo="Último pedido" valor={resumen.ultimoPedido ? formatoFecha(resumen.ultimoPedido) : "—"} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Indicador titulo="Pedidos" valor={String(resumen.pedidos)} icono="ventas" tono="azul" />
+        <Indicador titulo="Volumen comprado" valor={formatoM3(resumen.volumenM3)} icono="cubo" tono="ambar" />
+        <Indicador titulo="Valor comprado" valor={formatoPesos(resumen.valor)} icono="dinero" tono="verde" />
+        <Indicador
+          titulo="Último pedido"
+          valor={resumen.ultimoPedido ? formatoFecha(resumen.ultimoPedido) : "—"}
+          icono="calendario"
+          tono="violeta"
+        />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <section className="card lg:col-span-1">
-          <h2 className="mb-3 font-medium">Datos</h2>
-          <dl className="space-y-2 text-sm">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Tarjeta titulo="Datos del cliente" icono="clientes" className="lg:col-span-1">
+          <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <Dato titulo={TIPO_DOCUMENTO_ETIQUETA[cliente.tipoDocumento]} valor={cliente.documento} />
             <Dato
               titulo="Contacto"
@@ -117,24 +124,31 @@ export default async function ClientePage({ params }: PageProps<"/clientes/[id]"
             <Dato titulo="Cupo de crédito" valor={cliente.cupoCredito ? formatoPesos(cliente.cupoCredito) : null} />
             <Dato titulo="Cliente desde" valor={formatoFecha(cliente.creadoEn)} />
           </dl>
-          {cliente.notas && <p className="mt-3 whitespace-pre-line rounded bg-stone-50 p-3 text-sm">{cliente.notas}</p>}
-        </section>
+          {cliente.notas && (
+            <p className="mt-4 rounded-xl bg-amber-50/60 p-3 text-sm whitespace-pre-line text-stone-700">{cliente.notas}</p>
+          )}
+        </Tarjeta>
 
-        <section className="card space-y-4 lg:col-span-2">
-          <h2 className="font-medium">Seguimiento</h2>
-          <SeguimientoForm clienteId={id} hoy={hoyBogota()} />
+        <Tarjeta titulo="Seguimiento" icono="calendario" className="space-y-5 lg:col-span-2">
+          <div className="rounded-xl bg-stone-50 p-4">
+            <SeguimientoForm clienteId={id} hoy={hoyBogota()} />
+          </div>
 
           {pendientes.length > 0 && (
             <div>
-              <h3 className="mb-2 text-sm font-medium text-stone-500">Por hacer</h3>
-              <ul className="divide-y divide-stone-100 text-sm">
+              <h3 className="etiqueta mb-2">Por hacer</h3>
+              <ul className="space-y-2 text-sm">
                 {pendientes.map((s) => (
-                  <li key={s.id} className="flex flex-wrap items-center gap-3 py-2">
+                  <li
+                    key={s.id}
+                    className="flex flex-wrap items-center gap-3 rounded-xl border border-stone-200 px-3 py-2"
+                  >
                     <FechaTarea fecha={s.proximaFecha!} manana={manana} />
                     <span className="flex-1">{s.proximaAccion ?? s.descripcion}</span>
                     <form action={completarSeguimiento}>
                       <input type="hidden" name="id" value={s.id} />
                       <button type="submit" className="btn-secondary text-xs">
+                        <Icono nombre="check" className="size-3.5" />
                         Marcar hecho
                       </button>
                     </form>
@@ -145,19 +159,21 @@ export default async function ClientePage({ params }: PageProps<"/clientes/[id]"
           )}
 
           <div>
-            <h3 className="mb-2 text-sm font-medium text-stone-500">Historial de contacto</h3>
+            <h3 className="etiqueta mb-3">Historial de contacto</h3>
             {cliente.seguimientos.length === 0 ? (
-              <p className="text-sm text-stone-500">Aún no hay contactos registrados.</p>
+              <Vacio icono="telefono">Aún no hay contactos registrados.</Vacio>
             ) : (
-              <ol className="space-y-3 text-sm">
+              <ol className="relative space-y-4 border-l-2 border-amber-100 pl-5 text-sm">
                 {cliente.seguimientos.map((s) => (
-                  <li key={s.id} className="border-l-2 border-amber-200 pl-3">
+                  <li key={s.id} className="relative">
+                    <span className="absolute top-1.5 -left-[27px] size-3 rounded-full border-2 border-white bg-amber-500 ring-2 ring-amber-100" />
                     <p className="text-xs text-stone-500">
-                      {formatoFechaHora(s.creadoEn)} · {TIPO_SEGUIMIENTO_ETIQUETA[s.tipo]} · {s.usuario.nombre}
+                      <span className="font-medium text-stone-700">{TIPO_SEGUIMIENTO_ETIQUETA[s.tipo]}</span> ·{" "}
+                      {formatoFechaHora(s.creadoEn)} · {s.usuario.nombre}
                     </p>
-                    <p className="whitespace-pre-line">{s.descripcion}</p>
+                    <p className="mt-0.5 whitespace-pre-line">{s.descripcion}</p>
                     {s.proximaFecha && (
-                      <p className="text-xs text-stone-500">
+                      <p className="mt-1 text-xs text-stone-500">
                         Próxima: {s.proximaAccion ?? "seguimiento"} el {formatoFecha(s.proximaFecha)}
                         {s.completadoEn && " · hecho"}
                       </p>
@@ -167,53 +183,61 @@ export default async function ClientePage({ params }: PageProps<"/clientes/[id]"
               </ol>
             )}
           </div>
-        </section>
+        </Tarjeta>
       </div>
 
-      <section className="card space-y-4">
-        <h2 className="font-medium">Obras</h2>
+      <Tarjeta titulo="Obras" icono="obra" className="space-y-4">
         {cliente.obras.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="tabla">
-              <thead>
-                <tr>
-                  <th>Obra</th>
-                  <th>Dirección</th>
-                  <th>Contacto</th>
-                  <th>Pedidos</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {cliente.obras.map((o) => (
-                  <tr key={o.id} className={o.activa ? "" : "text-stone-400"}>
-                    <td>{o.nombre}</td>
-                    <td>{[o.direccion, o.ciudad].filter(Boolean).join(", ")}</td>
-                    <td>{[o.contacto, o.telefono].filter(Boolean).join(" · ") || "—"}</td>
-                    <td>{o._count.pedidos}</td>
-                    <td className="text-right">
-                      <form action={cambiarEstadoObra}>
-                        <input type="hidden" name="id" value={o.id} />
-                        <button type="submit" className="btn-secondary text-xs">
-                          {o.activa ? "Cerrar obra" : "Reabrir"}
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {cliente.obras.map((o) => (
+              <div
+                key={o.id}
+                className={`flex flex-col gap-2 rounded-xl border p-4 ${
+                  o.activa ? "border-stone-200" : "border-dashed border-stone-200 bg-stone-50 text-stone-400"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-semibold">{o.nombre}</p>
+                  <span className={`badge ${o.activa ? "bg-emerald-50 text-emerald-700" : "bg-stone-200 text-stone-500"}`}>
+                    {o.activa ? "Activa" : "Cerrada"}
+                  </span>
+                </div>
+                <p className="flex items-start gap-1.5 text-sm">
+                  <Icono nombre="ubicacion" className="mt-0.5 size-4 text-stone-400" />
+                  {[o.direccion, o.ciudad].filter(Boolean).join(", ")}
+                </p>
+                {(o.contacto || o.telefono) && (
+                  <p className="flex items-center gap-1.5 text-sm">
+                    <Icono nombre="telefono" className="size-4 text-stone-400" />
+                    {[o.contacto, o.telefono].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                <div className="mt-auto flex items-center justify-between border-t border-stone-100 pt-2">
+                  <span className="text-xs">
+                    {o._count.pedidos} {o._count.pedidos === 1 ? "pedido" : "pedidos"}
+                  </span>
+                  <form action={cambiarEstadoObra}>
+                    <input type="hidden" name="id" value={o.id} />
+                    <button type="submit" className="btn-secondary text-xs">
+                      {o.activa ? "Cerrar obra" : "Reabrir"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-        <ObraForm clienteId={id} ciudad={cliente.ciudad ?? undefined} />
-      </section>
+        <div className="rounded-xl bg-stone-50 p-4">
+          <p className="etiqueta mb-3">Agregar obra</p>
+          <ObraForm clienteId={id} ciudad={cliente.ciudad ?? undefined} />
+        </div>
+      </Tarjeta>
 
-      <section className="card">
-        <h2 className="mb-3 font-medium">Historial de compras</h2>
+      <Tarjeta titulo="Historial de compras" icono="ventas">
         {pedidos.length === 0 ? (
-          <p className="text-sm text-stone-500">Este cliente aún no tiene pedidos.</p>
+          <Vacio icono="ventas">Este cliente aún no tiene pedidos.</Vacio>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="-mx-5 overflow-x-auto px-5">
             <table className="tabla">
               <thead>
                 <tr>
@@ -229,38 +253,22 @@ export default async function ClientePage({ params }: PageProps<"/clientes/[id]"
               <tbody>
                 {pedidos.map((p) => (
                   <tr key={p.id} className={p.estado === "CANCELADO" ? "text-stone-400 line-through" : ""}>
-                    <td>{p.numero}</td>
+                    <td className="font-mono text-stone-500">{p.numero}</td>
                     <td className="whitespace-nowrap">{formatoFecha(p.fechaEntrega)}</td>
                     <td>{p.obra.nombre}</td>
                     <td>{p.producto.nombre}</td>
                     <td className="whitespace-nowrap">{formatoM3(p.volumenM3)}</td>
                     <td className="whitespace-nowrap">{formatoPesos(Number(p.volumenM3) * Number(p.precioM3))}</td>
-                    <td>{etiquetaEstado(p.estado)}</td>
+                    <td>
+                      <EstadoBadge estado={p.estado} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </section>
-    </div>
-  );
-}
-
-function Indicador({ titulo, valor }: { titulo: string; valor: string }) {
-  return (
-    <div className="card">
-      <p className="text-sm text-stone-500">{titulo}</p>
-      <p className="text-xl font-semibold">{valor}</p>
-    </div>
-  );
-}
-
-function Dato({ titulo, valor }: { titulo: string; valor: string | null }) {
-  return (
-    <div>
-      <dt className="text-xs text-stone-500">{titulo}</dt>
-      <dd>{valor ?? "—"}</dd>
+      </Tarjeta>
     </div>
   );
 }

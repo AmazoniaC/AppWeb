@@ -1,3 +1,4 @@
+import { Encabezado } from "@/components/ui";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { asesoresDisponibles } from "@/lib/clientes-datos";
@@ -22,8 +23,8 @@ export default async function EditarClientePage({ params }: PageProps<"/clientes
   );
 
   return (
-    <div className="max-w-4xl space-y-4">
-      <h1 className="text-2xl font-semibold">Editar {cliente.nombre}</h1>
+    <div className="max-w-4xl space-y-6">
+      <Encabezado titulo={`Editar ${cliente.nombre}`} volver={{ href: `/clientes/${id}`, texto: cliente.nombre }} />
       <ClienteForm cliente={valores} asesores={asesores} cancelarHref={`/clientes/${id}`} />
     </div>
   );

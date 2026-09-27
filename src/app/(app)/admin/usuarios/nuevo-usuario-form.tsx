@@ -40,7 +40,7 @@ export function NuevoUsuarioForm() {
           {pending ? "Creando…" : "Crear usuario"}
         </button>
         {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-        {state?.ok && <p className="text-sm text-green-700">Usuario creado.</p>}
+        {state?.ok && <p className="text-sm text-emerald-700">Usuario creado.</p>}
       </div>
     </form>
   );

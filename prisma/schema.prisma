@@ -246,3 +246,16 @@ model Despacho {
   @@index([estado])
   @@map("despachos")
 }
+
+// ─── Configuración de la empresa ────────────────────────────────────
+
+// Una sola fila (id "general") con la marca que se muestra en la app.
+// El logo se guarda en la base de datos para no depender de carpetas del equipo.
+model Configuracion {
+  id            String   @id @default("general")
+  logo          Bytes?
+  logoTipo      String?  @map("logo_tipo") // image/png, image/jpeg o image/webp
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  @@map("configuracion")
+}
