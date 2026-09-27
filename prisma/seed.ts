@@ -42,8 +42,31 @@ async function main() {
   const cliente = await prisma.cliente.upsert({
     where: { documento: "900123456-7" },
     update: {},
-    create: { nombre: "Constructora Ejemplo S.A.S.", documento: "900123456-7", telefono: "3000000000" },
+    create: {
+      nombre: "Constructora Ejemplo S.A.S.",
+      documento: "900123456-7",
+      telefono: "6085920000",
+      whatsapp: "3001234567",
+      ciudad: "Leticia",
+      contactoNombre: "Andrea Gómez",
+      contactoCargo: "Residente de obra",
+      plazoPagoDias: 30,
+      asesorId: creados.ventas.id,
+    },
   });
+
+  if ((await prisma.seguimiento.count({ where: { clienteId: cliente.id } })) === 0) {
+    await prisma.seguimiento.create({
+      data: {
+        clienteId: cliente.id,
+        usuarioId: creados.ventas.id,
+        tipo: "LLAMADA",
+        descripcion: "Pidió cotización para la losa del segundo piso.",
+        proximaAccion: "Enviar cotización",
+        proximaFecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      },
+    });
+  }
 
   let obra = await prisma.obra.findFirst({ where: { clienteId: cliente.id } });
   obra ??= await prisma.obra.create({
