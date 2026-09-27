@@ -5,6 +5,11 @@ import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
+if (!process.env.DATABASE_URL) {
+  console.error("Falta DATABASE_URL. Copia .env.example a .env y pon ahí la conexión a tu base de datos (ver README).");
+  process.exit(1);
+}
+
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
