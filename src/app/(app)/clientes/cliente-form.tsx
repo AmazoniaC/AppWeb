@@ -32,7 +32,7 @@ export function ClienteForm({
       {v.id && <input type="hidden" name="id" value={v.id} />}
 
       <fieldset className="card grid gap-4 sm:grid-cols-2">
-        <legend className="px-1 font-medium">Identificación</legend>
+        <legend className="float-left mb-1 w-full font-semibold text-stone-800 sm:col-span-full">Identificación</legend>
         <Campo etiqueta="Tipo de persona">
           <select name="tipoPersona" defaultValue={v.tipoPersona ?? "JURIDICA"} className="input">
             {TIPOS_PERSONA.map((t) => (
@@ -72,7 +72,7 @@ export function ClienteForm({
       </fieldset>
 
       <fieldset className="card grid gap-4 sm:grid-cols-2">
-        <legend className="px-1 font-medium">Contacto</legend>
+        <legend className="float-left mb-1 w-full font-semibold text-stone-800 sm:col-span-full">Contacto</legend>
         <Campo etiqueta="Persona de contacto">
           <input name="contactoNombre" defaultValue={v.contactoNombre} className="input" />
         </Campo>
@@ -99,7 +99,7 @@ export function ClienteForm({
       </fieldset>
 
       <fieldset className="card grid gap-4 sm:grid-cols-3">
-        <legend className="px-1 font-medium">Comercial</legend>
+        <legend className="float-left mb-1 w-full font-semibold text-stone-800 sm:col-span-full">Comercial</legend>
         <Campo etiqueta="Asesor responsable">
           <select name="asesorId" defaultValue={v.asesorId ?? ""} className="input">
             <option value="">Sin asignar</option>

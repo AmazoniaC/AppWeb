@@ -14,6 +14,21 @@ export function etiquetaEstado(estado: string) {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
+// Color de la etiqueta de estado de pedidos y despachos.
+const COLOR_ESTADO: Record<string, string> = {
+  PENDIENTE: "bg-stone-100 text-stone-700",
+  PROGRAMADO: "bg-stone-100 text-stone-700",
+  CONFIRMADO: "bg-sky-100 text-sky-800",
+  EN_PRODUCCION: "bg-amber-100 text-amber-800",
+  CARGANDO: "bg-amber-100 text-amber-800",
+  DESPACHADO: "bg-violet-100 text-violet-800",
+  EN_RUTA: "bg-violet-100 text-violet-800",
+  EN_OBRA: "bg-indigo-100 text-indigo-800",
+  ENTREGADO: "bg-emerald-100 text-emerald-800",
+  CANCELADO: "bg-red-100 text-red-700",
+};
+export const colorEstado = (estado: string) => COLOR_ESTADO[estado] ?? "bg-stone-100 text-stone-700";
+
 const pesos = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 export const formatoPesos = (v: { toString(): string } | number) => pesos.format(Number(v.toString()));
 

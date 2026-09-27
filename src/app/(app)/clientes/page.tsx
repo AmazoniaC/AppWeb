@@ -10,6 +10,8 @@ import {
 import { seguimientosPendientes } from "@/lib/clientes-datos";
 import { formatoFecha, inicioDelDia } from "@/lib/formato";
 import { FechaTarea } from "./fecha-tarea";
+import { Icono } from "@/components/iconos";
+import { Avatar, Dato, Encabezado, Tarjeta, Vacio } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Clientes · Amazonia Concrete" };
@@ -62,41 +64,48 @@ export default async function ClientesPage({ searchParams }: PageProps<"/cliente
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Clientes</h1>
+    <div className="space-y-6">
+      <Encabezado titulo="Clientes" descripcion={`${total} ${total === 1 ? "cliente" : "clientes"}${q || estado || mios ? " con estos filtros" : ""}`}>
         <Link href="/clientes/nuevo" className="btn-primary">
+          <Icono nombre="mas" className="size-4" />
           Nuevo cliente
         </Link>
-      </div>
+      </Encabezado>
 
       {pendientes.length > 0 && (
-        <section className="card">
-          <h2 className="mb-3 font-medium">Seguimientos por hacer</h2>
-          <ul className="divide-y divide-stone-100 text-sm">
+        <Tarjeta titulo="Seguimientos por hacer" icono="calendario">
+          <ul className="grid gap-2 md:grid-cols-2">
             {pendientes.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                <FechaTarea fecha={s.proximaFecha!} manana={manana} />
-                <Link href={`/clientes/${s.cliente.id}`} className="font-medium hover:underline">
-                  {s.cliente.nombre}
+              <li key={s.id}>
+                <Link
+                  href={`/clientes/${s.cliente.id}`}
+                  className="flex h-full flex-col gap-0.5 rounded-xl border border-stone-200 p-3 text-sm transition hover:border-amber-300 hover:bg-amber-50/40"
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate font-semibold">{s.cliente.nombre}</span>
+                    <FechaTarea fecha={s.proximaFecha!} manana={manana} />
+                  </span>
+                  <span className="text-stone-600">{s.proximaAccion ?? TIPO_SEGUIMIENTO_ETIQUETA[s.tipo]}</span>
+                  <span className="text-xs text-stone-400">{s.usuario.nombre}</span>
                 </Link>
-                <span className="text-stone-600">{s.proximaAccion ?? TIPO_SEGUIMIENTO_ETIQUETA[s.tipo]}</span>
-                <span className="text-xs text-stone-400">· {s.usuario.nombre}</span>
               </li>
             ))}
           </ul>
-        </section>
+        </Tarjeta>
       )}
 
       <form className="card flex flex-wrap items-end gap-3">
         <label className="min-w-60 flex-1">
           <span className="mb-1 block text-sm font-medium">Buscar</span>
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Nombre, NIT, teléfono, contacto o ciudad"
-            className="input"
-          />
+          <span className="relative block">
+            <Icono nombre="buscar" className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-400" />
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Nombre, NIT, teléfono, contacto o ciudad"
+              className="input pl-9"
+            />
+          </span>
         </label>
         <label>
           <span className="mb-1 block text-sm font-medium">Estado</span>
@@ -110,72 +119,61 @@ export default async function ClientesPage({ searchParams }: PageProps<"/cliente
           </select>
         </label>
         <label className="flex items-center gap-2 py-2 text-sm">
-          <input type="checkbox" name="mios" value="1" defaultChecked={mios} />
+          <input type="checkbox" name="mios" value="1" defaultChecked={mios} className="size-4 accent-amber-600" />
           Solo mis clientes
         </label>
-        <button type="submit" className="btn-secondary">
+        <button type="submit" className="btn-secondary py-2">
           Filtrar
         </button>
       </form>
 
-      <section className="card overflow-x-auto">
-        {clientes.length === 0 ? (
-          <p className="text-sm text-stone-500">
-            {q || estado || mios ? "Ningún cliente coincide con la búsqueda." : "Aún no hay clientes. Crea el primero."}
-          </p>
-        ) : (
-          <table className="tabla">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Documento</th>
-                <th>Contacto</th>
-                <th>Ciudad</th>
-                <th>Asesor</th>
-                <th>Pedidos</th>
-                <th>Último contacto</th>
-                <th>Próximo seguimiento</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clientes.map((c) => {
-                const proxima = proximaPorCliente.get(c.id);
-                return (
-                  <tr key={c.id}>
-                    <td>
-                      <Link href={`/clientes/${c.id}`} className="font-medium hover:underline">
-                        {c.nombre}
-                      </Link>
-                      <span className={`ml-2 rounded px-1.5 py-0.5 text-xs ${ESTADO_CLIENTE_COLOR[c.estado]}`}>
-                        {ESTADO_CLIENTE_ETIQUETA[c.estado]}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap">{c.documento}</td>
-                    <td>
-                      {c.contactoNombre && <div>{c.contactoNombre}</div>}
-                      <div className="text-stone-500">{c.whatsapp ?? c.telefono ?? "—"}</div>
-                    </td>
-                    <td>{c.ciudad ?? "—"}</td>
-                    <td>{c.asesor?.nombre ?? "—"}</td>
-                    <td>{c._count.pedidos}</td>
-                    <td className="whitespace-nowrap">
-                      {c.seguimientos[0] ? formatoFecha(c.seguimientos[0].creadoEn) : "—"}
-                    </td>
-                    <td className="whitespace-nowrap">
-                      {proxima ? <FechaTarea fecha={proxima} manana={manana} /> : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-        {total > LIMITE && (
-          <p className="mt-3 text-xs text-stone-500">
-            Mostrando {LIMITE} de {total} clientes. Usa la búsqueda para encontrar los demás.
-          </p>
-        )}
-      </section>
+      {clientes.length === 0 ? (
+        <Vacio icono="clientes">
+          {q || estado || mios ? "Ningún cliente coincide con la búsqueda." : "Aún no hay clientes. Crea el primero."}
+        </Vacio>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {clientes.map((c) => {
+            const proxima = proximaPorCliente.get(c.id);
+            const telefono = c.whatsapp ?? c.telefono;
+            return (
+              <Link key={c.id} href={`/clientes/${c.id}`} className="card-enlace flex flex-col gap-4">
+                <div className="flex items-start gap-3">
+                  <Avatar nombre={c.nombreComercial ?? c.nombre} />
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 font-semibold text-stone-900">{c.nombre}</p>
+                    <p className="truncate text-xs text-stone-500">
+                      {c.documento}
+                      {c.ciudad && ` · ${c.ciudad}`}
+                    </p>
+                  </div>
+                  <span className={`badge ${ESTADO_CLIENTE_COLOR[c.estado]}`}>{ESTADO_CLIENTE_ETIQUETA[c.estado]}</span>
+                </div>
+
+                <div className="space-y-1 text-sm text-stone-600">
+                  {c.contactoNombre && <p className="truncate">{c.contactoNombre}</p>}
+                  <p className="flex items-center gap-1.5">
+                    <Icono nombre="telefono" className="size-4 text-stone-400" />
+                    {telefono ?? "Sin teléfono"}
+                  </p>
+                </div>
+
+                <dl className="mt-auto grid grid-cols-3 gap-2 border-t border-stone-100 pt-3">
+                  <Dato titulo="Pedidos" valor={c._count.pedidos} />
+                  <Dato titulo="Último contacto" valor={c.seguimientos[0] ? formatoFecha(c.seguimientos[0].creadoEn) : "—"} />
+                  <Dato titulo="Próximo" valor={proxima ? <FechaTarea fecha={proxima} manana={manana} /> : "—"} />
+                </dl>
+                <p className="-mt-2 truncate text-xs text-stone-400">Asesor: {c.asesor?.nombre ?? "sin asignar"}</p>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+      {total > LIMITE && (
+        <p className="text-center text-xs text-stone-500">
+          Mostrando {LIMITE} de {total} clientes. Usa la búsqueda para encontrar los demás.
+        </p>
+      )}
     </div>
   );
 }
