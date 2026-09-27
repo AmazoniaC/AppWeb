@@ -7,6 +7,12 @@ Sesiones propias firmadas con JWT (`jose`) en cookie `httpOnly`, contraseñas co
 
 ## Arrancar en local
 
+**En Windows, con PostgreSQL ya instalado:** haz doble clic en `iniciar.bat`. La primera vez
+te pide la contraseña del usuario `postgres`, crea el `.env`, la base de datos y los datos de
+ejemplo, y abre la aplicación en el navegador. Las siguientes veces solo la arranca.
+
+Si prefieres hacerlo paso a paso:
+
 Requisitos: Node 20 o superior.
 
 ### 1. Base de datos (la forma más fácil: Neon, gratis y sin instalar nada)
