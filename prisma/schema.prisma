@@ -1,0 +1,181 @@
+// Esquema base del ERP de Amazonia Concrete.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Usuarios y acceso ──────────────────────────────────────────────
+
+enum Rol {
+  ADMIN
+  VENTAS
+  PLANTA
+  CONDUCTOR
+}
+
+model Usuario {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  nombre        String
+  passwordHash  String   @map("password_hash")
+  rol           Rol
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  pedidosCreados Pedido[]   @relation("PedidoCreadoPor")
+  despachos      Despacho[] @relation("DespachoConductor")
+  vehiculo       Vehiculo?
+
+  @@map("usuarios")
+}
+
+// ─── Comercial ──────────────────────────────────────────────────────
+
+model Cliente {
+  id            String   @id @default(cuid())
+  nombre        String
+  documento     String   @unique // NIT o cédula
+  telefono      String?
+  email         String?
+  direccion     String?
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  obras   Obra[]
+  pedidos Pedido[]
+
+  @@map("clientes")
+}
+
+model Obra {
+  id            String   @id @default(cuid())
+  clienteId     String   @map("cliente_id")
+  nombre        String
+  direccion     String
+  ciudad        String?
+  contacto      String?
+  telefono      String?
+  activa        Boolean  @default(true)
+  creadoEn      DateTime @default(now()) @map("creado_en")
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  cliente Cliente  @relation(fields: [clienteId], references: [id])
+  pedidos Pedido[]
+
+  @@index([clienteId])
+  @@map("obras")
+}
+
+// Diseño de mezcla / tipo de concreto que se vende.
+model Producto {
+  id             String   @id @default(cuid())
+  codigo         String   @unique
+  nombre         String
+  resistenciaPsi Int?     @map("resistencia_psi")
+  asentamientoCm Decimal? @map("asentamiento_cm") @db.Decimal(5, 1)
+  precioM3       Decimal  @map("precio_m3") @db.Decimal(12, 2)
+  activo         Boolean  @default(true)
+  creadoEn       DateTime @default(now()) @map("creado_en")
+  actualizadoEn  DateTime @updatedAt @map("actualizado_en")
+
+  pedidos Pedido[]
+
+  @@map("productos")
+}
+
+enum EstadoPedido {
+  PENDIENTE
+  CONFIRMADO
+  EN_PRODUCCION
+  DESPACHADO
+  ENTREGADO
+  CANCELADO
+}
+
+model Pedido {
+  id            String       @id @default(cuid())
+  numero        Int          @unique @default(autoincrement())
+  clienteId     String       @map("cliente_id")
+  obraId        String       @map("obra_id")
+  productoId    String       @map("producto_id")
+  volumenM3     Decimal      @map("volumen_m3") @db.Decimal(8, 2)
+  precioM3      Decimal      @map("precio_m3") @db.Decimal(12, 2)
+  fechaEntrega  DateTime     @map("fecha_entrega")
+  estado        EstadoPedido @default(PENDIENTE)
+  notas         String?
+  creadoPorId   String       @map("creado_por_id")
+  creadoEn      DateTime     @default(now()) @map("creado_en")
+  actualizadoEn DateTime     @updatedAt @map("actualizado_en")
+
+  cliente   Cliente    @relation(fields: [clienteId], references: [id])
+  obra      Obra       @relation(fields: [obraId], references: [id])
+  producto  Producto   @relation(fields: [productoId], references: [id])
+  creadoPor Usuario    @relation("PedidoCreadoPor", fields: [creadoPorId], references: [id])
+  despachos Despacho[]
+
+  @@index([clienteId])
+  @@index([fechaEntrega])
+  @@index([estado])
+  @@map("pedidos")
+}
+
+// ─── Operación: planta y flota ──────────────────────────────────────
+
+model Vehiculo {
+  id                  String   @id @default(cuid())
+  placa               String   @unique
+  descripcion         String?
+  capacidadM3         Decimal  @map("capacidad_m3") @db.Decimal(5, 2)
+  conductorAsignadoId String?  @unique @map("conductor_asignado_id")
+  activo              Boolean  @default(true)
+  creadoEn            DateTime @default(now()) @map("creado_en")
+  actualizadoEn       DateTime @updatedAt @map("actualizado_en")
+
+  conductorAsignado Usuario?   @relation(fields: [conductorAsignadoId], references: [id])
+  despachos         Despacho[]
+
+  @@map("vehiculos")
+}
+
+enum EstadoDespacho {
+  PROGRAMADO
+  CARGANDO
+  EN_RUTA
+  EN_OBRA
+  ENTREGADO
+  CANCELADO
+}
+
+// Cada viaje de un mixer hacia la obra (remisión).
+model Despacho {
+  id            String         @id @default(cuid())
+  numero        Int            @unique @default(autoincrement())
+  pedidoId      String         @map("pedido_id")
+  vehiculoId    String         @map("vehiculo_id")
+  conductorId   String         @map("conductor_id")
+  volumenM3     Decimal        @map("volumen_m3") @db.Decimal(6, 2)
+  estado        EstadoDespacho @default(PROGRAMADO)
+  horaSalida    DateTime?      @map("hora_salida")
+  horaLlegada   DateTime?      @map("hora_llegada")
+  horaEntrega   DateTime?      @map("hora_entrega")
+  notas         String?
+  creadoEn      DateTime       @default(now()) @map("creado_en")
+  actualizadoEn DateTime       @updatedAt @map("actualizado_en")
+
+  pedido    Pedido   @relation(fields: [pedidoId], references: [id])
+  vehiculo  Vehiculo @relation(fields: [vehiculoId], references: [id])
+  conductor Usuario  @relation("DespachoConductor", fields: [conductorId], references: [id])
+
+  @@index([pedidoId])
+  @@index([conductorId])
+  @@index([estado])
+  @@map("despachos")
+}
