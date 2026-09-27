@@ -7,15 +7,33 @@ Sesiones propias firmadas con JWT (`jose`) en cookie `httpOnly`, contraseñas co
 
 ## Arrancar en local
 
-Requisitos: Node 20+ y PostgreSQL 16 (o Docker).
+Requisitos: Node 20 o superior.
+
+### 1. Base de datos (la forma más fácil: Neon, gratis y sin instalar nada)
+
+1. Crea una cuenta en <https://neon.tech> (puedes entrar con Google).
+2. Crea un proyecto (cualquier nombre, por ejemplo `amazonia-erp`; región: la más cercana).
+3. En el panel, pulsa **Connect**, desactiva **Connection pooling** y copia la cadena de
+   conexión. Se ve así: `postgresql://usuario:clave@ep-xxxx.aws.neon.tech/neondb?sslmode=require`
+
+Si prefieres PostgreSQL en tu computador y tienes Docker: `docker compose up -d` y usa la
+cadena que ya trae `.env.example`.
+
+### 2. Archivo `.env`
+
+Copia la plantilla (en Windows: `copy .env.example .env`; en Mac/Linux: `cp .env.example .env`),
+abre `.env` y:
+
+- En `DATABASE_URL` pega la cadena de Neon, entre comillas.
+- En `SESSION_SECRET` escribe cualquier texto largo y aleatorio (32 caracteres o más).
+
+### 3. Crear las tablas y arrancar
 
 ```bash
-cp .env.example .env          # y cambia SESSION_SECRET
-docker compose up -d          # PostgreSQL local (si no tienes uno instalado)
-npm install                   # también genera el cliente de Prisma
-npm run db:migrate            # crea las tablas
-npm run db:seed               # usuarios y datos de ejemplo
-npm run dev                   # http://localhost:3000
+npm install          # también genera el cliente de Prisma
+npm run db:migrate   # crea las tablas en la base de datos
+npm run db:seed      # usuarios y datos de ejemplo
+npm run dev          # abre http://localhost:3000
 ```
 
 Usuarios de prueba (contraseña `Amazonia2026!`):
